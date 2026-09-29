@@ -12,28 +12,38 @@ Desenvolver um sistema de gestão para oficina mecânica moderno, intuitivo e mo
 
 ## Estrutura de Especificações
 ```text
-/specs
-  /001-clientes-veiculos.md
-  /002-ordens-servico.md
-  /003-estoque-pecas.md
-  /004-agendamento.md
-  /005-faturamento.md
+/openspec
+  config.yaml
+  /specs
+    /clientes-veiculos/spec.md
+    /ordens-servico/spec.md
+    /estoque-pecas/spec.md
+    /agendamento/spec.md
+    /faturamento/spec.md
 /docs
   visao-geral.md
+  modelo-dados.md
+  escopo-e-limites.md
+  pendencias.md
   plano-implementacao.md
 ```
 
+> Os requisitos de negócio vivem em `openspec/specs/<domínio>/spec.md`, no formato do
+> OpenSpec (Requirement / Scenario). O modelo de dados e a rastreabilidade entre
+> entidades e specs estão em `docs/modelo-dados.md`. As lacunas entre especificação e
+> implementação estão em `docs/pendencias.md`.
+
 ## Matriz de Dependência das Specs
 ```text
-[ Spec 001: Clientes e Veículos ] ──► [ Spec 004: Agendamento ]
-               │                                │
-               ▼                                ▼
-[ Spec 002: Ordens de Serviço ] ◄───────────────┘
-       │               ▲
-       ▼               │
-[ Spec 003: Estoque ] ──┴──► [ Spec 005: Faturamento ]
+[ clientes-veiculos ] ──► [ agendamento ]
+          │                      │
+          ▼                      ▼
+[ ordens-servico ] ◄─────────────┘
+     │          ▲
+     ▼          │
+[ estoque-pecas ] ──┴──► [ faturamento ]
 ```
 
 ## Caminhos de Sequência Propostos
 1. **Consolidação do Modelo de Dados:** Mapear tipos de dados, PKs e FKs antes do código.
-2. **Execução Incremental:** Iniciar o desenvolvimento pela **Spec 001** (Clientes e Veículos), aplicando testes e critérios de aceite.
+2. **Execução Incremental:** Iniciar o desenvolvimento por **clientes-veiculos**, aplicando testes e critérios de aceite.

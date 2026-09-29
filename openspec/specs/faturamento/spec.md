@@ -35,3 +35,11 @@ O sistema SHALL alertar o atendente quando o valor informado for superior ao tot
 - **GIVEN** uma OS com valor restante de R$ 90,00
 - **WHEN** o atendente registra um pagamento em dinheiro de R$ 100,00
 - **THEN** o sistema exibe o valor de troco calculado (R$ 10,00) e permite registrar a operação
+
+### Requirement: Histórico de Lançamentos Parciais
+O sistema SHALL preservar o histórico completo de todos os lançamentos de pagamento de uma OS, mantendo forma de pagamento, valor e data de cada lançamento.
+
+#### Scenario: Consulta do histórico de pagamentos parciais
+- **GIVEN** uma OS que recebeu mais de um lançamento de pagamento, em datas distintas
+- **WHEN** o usuário consulta o financeiro da OS
+- **THEN** todos os lançamentos parciais são exibidos em ordem cronológica, com a forma de pagamento, o valor e a data de cada um

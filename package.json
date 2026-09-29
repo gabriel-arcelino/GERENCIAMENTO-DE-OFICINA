@@ -14,10 +14,12 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "playwright:install": "playwright install",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:fluxo": "node scripts/verify-fluxo-e2e.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

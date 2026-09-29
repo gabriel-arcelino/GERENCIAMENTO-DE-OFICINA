@@ -1,0 +1,24 @@
+# Normaliza o fim de linha no repositório para LF.
+#
+# Motivo: o `core.autocrlf` desta máquina está como `true` (vem do system config),
+# o que reescreve os arquivos para CRLF no working copy. Isso gera diffs ruidosos,
+# e é indesejável porque o projeto roda em Docker (Linux), onde LF é o esperado.
+#
+# Com estas regras, o Git guarda LF e faz checkout LF em qualquer sistema.
+* text=auto eol=lf
+
+# Arquivos que NUNCA devem ser normalizados (binários e afins)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+
+# Lockfile gerado: não revisar diff nem normalizar
+package-lock.json -diff linguist-generated

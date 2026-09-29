@@ -36,3 +36,16 @@ O sistema SHALL sinalizar no painel de estoque todas as peças cujo saldo atual 
 - **GIVEN** uma peça com estoque_minimo de 5 unidades e saldo atual de 4 unidades
 - **WHEN** o usuário visualiza a listagem de estoque
 - **THEN** a peça aparece destacada na lista de itens em reposição necessária
+
+### Requirement: Lançamento de Entrada Manual no Estoque
+O sistema SHALL permitir o lançamento manual de entrada de mercadorias, incrementando o saldo da peça e registrando a movimentação correspondente do tipo ENTRADA.
+
+#### Scenario: Entrada manual de mercadorias
+- **GIVEN** uma peça cadastrada no catálogo
+- **WHEN** o operador lança uma entrada manual informando a quantidade recebida
+- **THEN** o saldo da peça é incrementado e uma movimentação do tipo ENTRADA é registrada para a peça
+
+#### Scenario: Bloqueio de entrada com quantidade inválida
+- **GIVEN** uma peça cadastrada no catálogo
+- **WHEN** o operador tenta lançar uma entrada com quantidade menor ou igual a zero
+- **THEN** o sistema SHALL recusar a operação informando que a quantidade deve ser maior que zero

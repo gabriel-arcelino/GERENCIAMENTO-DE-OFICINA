@@ -31,6 +31,10 @@ Sistema de gestão para oficina mecânica, desenvolvido com Next.js 14, TypeScri
 ### 1. Instalar dependências
 
 ```bash
+# Clone novo ou CI: instala exatamente as versões do package-lock.json
+npm ci
+
+# Durante o desenvolvimento, se você alterou o package.json
 npm install
 ```
 
@@ -48,16 +52,27 @@ Copie o arquivo `.env.example` para `.env` (já vem configurado para o Docker lo
 copy .env.example .env
 ```
 
-### 4. Gerar o Prisma Client e criar as tabelas
+### 4. Gerar o Prisma Client e aplicar as migrations
 
 ```bash
 npm run db:generate
-npm run db:migrate
+npm run db:deploy
 ```
 
-> Quando solicitado o nome da migration, use: `init`
+> `db:deploy` (`prisma migrate deploy`) aplica as migrations já versionadas em
+> `prisma/migrations/` e **não** pede nome de migration — é o comando correto para
+> um clone novo ou CI. Para **criar** uma migration nova durante o desenvolvimento,
+> use `npm run db:migrate`.
 
-### 5. Iniciar o servidor de desenvolvimento
+### 5. (Opcional) Instalar os browsers do Playwright
+
+Necessário apenas para rodar os testes end-to-end:
+
+```bash
+npm run playwright:install
+```
+
+### 6. Iniciar o servidor de desenvolvimento
 
 ```bash
 npm run dev
@@ -74,8 +89,17 @@ npm test
 # Apenas unitários (lógica de negócio pura, sem banco)
 npm run test:unit
 
+# Testes de integração (exigem banco rodando)
+npm run test:integration
+
 # Com cobertura
 npm run test:coverage
+
+# End-to-end com Playwright (exige `npm run playwright:install` antes)
+npm run test:e2e
+
+# Verificação manual do fluxo completo contra o banco real (11 passos)
+npm run verify:fluxo
 ```
 
 ## Comandos úteis
@@ -87,8 +111,11 @@ npm run db:studio
 # Gerar client Prisma após alterar o schema
 npm run db:generate
 
-# Criar nova migration
+# Criar nova migration (desenvolvimento)
 npm run db:migrate
+
+# Aplicar migrations versionadas (clone novo, CI, produção)
+npm run db:deploy
 
 # Resetar banco (apaga todos os dados)
 npm run db:reset
@@ -127,11 +154,22 @@ src/
     └── utils.ts            # Utilitários (cn, formatCurrency, etc.)
 
 prisma/
-└── schema.prisma           # Schema completo com todas as entidades
+├── schema.prisma           # Schema completo com todas as entidades
+└── migrations/             # Migrations versionadas
 
-specs/                      # Especificações das features
+openspec/
+├── config.yaml             # Configuração do OpenSpec
+└── specs/                  # Especificações — fonte de verdade dos requisitos
+
 docs/                       # Documentação do projeto
+scripts/                    # Scripts utilitários (verificação manual de fluxo)
 ```
+
+> **Especificações:** os requisitos de negócio ficam em `openspec/specs/<domínio>/spec.md`,
+> no formato do OpenSpec (Requirement / Scenario com SHALL). O modelo de dados é
+> detalhado em `docs/modelo-dados.md`, que faz a rastreabilidade entre entidades e specs.
+> Os limites do sistema estão em `docs/escopo-e-limites.md`, e as divergências conhecidas
+> entre especificação e implementação em `docs/pendencias.md`.
 
 ## Fluxo de Status das OS
 

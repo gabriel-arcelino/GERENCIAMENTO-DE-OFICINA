@@ -36,3 +36,24 @@ O sistema SHALL permitir consultar clientes por nome, telefone ou placa de veíc
 #### Scenario: Busca por placa
 - **WHEN** o atendente digita a placa de um veículo na busca
 - **THEN** o sistema retorna o cliente titular e os dados do veículo
+
+### Requirement: Cliente sem Veículo Vinculado
+O sistema SHALL permitir o cadastro de clientes sem nenhum veículo associado e SHALL exibi-los normalmente nos resultados de busca, sem tratá-los como erro.
+
+#### Scenario: Busca retorna cliente sem veículo
+- **GIVEN** um cliente cadastrado sem nenhum veículo vinculado
+- **WHEN** o atendente realiza uma busca por nome, telefone ou e-mail
+- **THEN** o cliente é retornado na listagem com a contagem de veículos igual a zero, sem mensagem de erro
+
+### Requirement: Vínculo de Propriedade entre Veículo e Cliente
+O sistema SHALL permitir que um mesmo cliente possua múltiplos veículos e SHALL garantir que cada veículo pertença a exatamente um cliente por vez.
+
+#### Scenario: Cliente com múltiplos veículos
+- **GIVEN** um cliente que já possui um veículo cadastrado
+- **WHEN** o atendente cadastra um segundo veículo vinculado a esse mesmo cliente
+- **THEN** os dois veículos permanecem vinculados ao cliente e são exibidos na ficha do cliente
+
+#### Scenario: Veículo com um único proprietário
+- **GIVEN** um veículo já vinculado a um cliente
+- **WHEN** os dados do veículo são consultados no sistema
+- **THEN** o sistema apresenta apenas um cliente como proprietário do veículo
