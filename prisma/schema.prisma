@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum StatusOS {
+  RECEBIDO
+  DIAGNOSTICO
+  AGUARDANDO_APROVACAO
+  APROVADO
+  EM_EXECUCAO
+  CONFERENCIA
+  PRONTO_PARA_ENTREGA
+  ENTREGUE
+  REPROVADO
+}
+
+enum TipoItem {
+  PECA
+  MAO_DE_OBRA
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  ESTORNO
+}
+
+enum StatusAgendamento {
+  AGENDADO
+  CONVERTIDO_EM_OS
+  CANCELADO
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  PIX
+  CARTAO_DEBITO
+  CARTAO_CREDITO
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC 001 — Clientes e Veículos
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  telefone  String
+  email     String?
+  endereco  String?
+  documento String?
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  veiculos     Veiculo[]
+  ordens       OrdemServico[]
+  agendamentos Agendamento[]
+
+  @@map("clientes")
+}
+
+model Veiculo {
+  id         String   @id @default(cuid())
+  placa      String   @unique
+  marca      String
+  modelo     String
+  ano        Int
+  cor        String?
+  clienteId  String
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  cliente      Cliente        @relation(fields: [clienteId], references: [id])
+  ordens       OrdemServico[]
+  agendamentos Agendamento[]
+
+  @@map("veiculos")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC 002 — Ordens de Serviço
+// ─────────────────────────────────────────────────────────────────────────────
+
+model OrdemServico {
+  id                  String    @id @default(cuid())
+  numero              Int       @unique @default(autoincrement())
+  veiculoId           String
+  clienteId           String
+  status              StatusOS  @default(RECEBIDO)
+  dataAbertura        DateTime  @default(now())
+  dataPrevisaoEntrega DateTime?
+  dataEntrega         DateTime?
+  kmEntrada           Int?
+  relatoCliente       String?
+  diagnosticoTecnico  String?
+  // Gate de aprovação: registra se o orçamento foi formalmente aprovado pelo cliente
+  orcamentoAprovado   Boolean   @default(false)
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+
+  veiculo    Veiculo              @relation(fields: [veiculoId], references: [id])
+  cliente    Cliente              @relation(fields: [clienteId], references: [id])
+  itens      ItemOrdemServico[]
+  historico  HistoricoStatusOS[]
+  pagamentos Pagamento[]
+  agendamento Agendamento?
+
+  @@map("ordens_servico")
+}
+
+model ItemOrdemServico {
+  id           String    @id @default(cuid())
+  osId         String
+  tipo         TipoItem
+  descricao    String
+  quantidade   Decimal   @db.Decimal(10, 3)
+  valorUnitario Decimal  @db.Decimal(10, 2)
+  // Referência opcional à peça do estoque (nulo para mão de obra)
+  pecaId       String?
+  criadoEm    DateTime  @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  os   OrdemServico @relation(fields: [osId], references: [id])
+  peca Peca?        @relation(fields: [pecaId], references: [id])
+
+  @@map("itens_ordem_servico")
+}
+
+model HistoricoStatusOS {
+  id             String   @id @default(cuid())
+  osId           String
+  statusAnterior StatusOS?
+  statusNovo     StatusOS
+  dataHora       DateTime @default(now())
+
+  os OrdemServico @relation(fields: [osId], references: [id])
+
+  @@map("historico_status_os")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC 003 — Estoque de Peças
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Peca {
+  id               String  @id @default(cuid())
+  codigo           String  @unique
+  descricao        String
+  quantidadeEstoque Decimal @default(0) @db.Decimal(10, 3)
+  estoqueMinimo    Decimal @default(0) @db.Decimal(10, 3)
+  valorCusto       Decimal @db.Decimal(10, 2)
+  valorVenda       Decimal @db.Decimal(10, 2)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  movimentacoes   MovimentacaoEstoque[]
+  itensOs         ItemOrdemServico[]
+
+  @@map("pecas")
+}
+
+model MovimentacaoEstoque {
+  id         String           @id @default(cuid())
+  pecaId     String
+  tipo       TipoMovimentacao
+  quantidade Decimal          @db.Decimal(10, 3)
+  // osId é opcional: entrada manual não tem OS associada
+  osId       String?
+  dataHora   DateTime         @default(now())
+
+  peca Peca @relation(fields: [pecaId], references: [id])
+
+  @@map("movimentacoes_estoque")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC 004 — Agendamento
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Agendamento {
+  id               String            @id @default(cuid())
+  clienteId        String
+  veiculoId        String
+  dataAgendamento  DateTime
+  observacao       String?
+  status           StatusAgendamento @default(AGENDADO)
+  // Referência à OS gerada (preenchida quando convertido)
+  osGeradaId       String?           @unique
+  criadoEm        DateTime          @default(now())
+  atualizadoEm    DateTime          @updatedAt
+
+  cliente    Cliente       @relation(fields: [clienteId], references: [id])
+  veiculo    Veiculo       @relation(fields: [veiculoId], references: [id])
+  osGerada   OrdemServico? @relation(fields: [osGeradaId], references: [id])
+
+  @@map("agendamentos")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPEC 005 — Faturamento
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Pagamento {
+  id             String         @id @default(cuid())
+  osId           String
+  formaPagamento FormaPagamento
+  valor          Decimal        @db.Decimal(10, 2)
+  dataPagamento  DateTime       @default(now())
+  criadoEm      DateTime       @default(now())
+
+  os OrdemServico @relation(fields: [osId], references: [id])
+
+  @@map("pagamentos")
+}

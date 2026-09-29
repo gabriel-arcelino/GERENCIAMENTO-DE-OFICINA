@@ -1,0 +1,128 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ---------------------------------------------------------------
+# Dependências
+# ---------------------------------------------------------------
+/node_modules
+/.pnp
+.pnp.js
+.pnp.cjs
+.yarn/install-state.gz
+.yarn/cache
+.yarn/build-state.yml
+.pnpm-store/
+
+# ---------------------------------------------------------------
+# Next.js
+# ---------------------------------------------------------------
+/.next/
+/out/
+next-env.d.ts
+
+# ---------------------------------------------------------------
+# Build de produção
+# ---------------------------------------------------------------
+/build
+/dist/
+
+# ---------------------------------------------------------------
+# Testes — Vitest
+# ---------------------------------------------------------------
+/coverage
+*.lcov
+.vitest/
+
+# ---------------------------------------------------------------
+# Testes — Playwright (E2E)
+# ---------------------------------------------------------------
+/playwright-report/
+/blob-report/
+/test-results/
+/playwright/.cache/
+.playwright/
+
+# ---------------------------------------------------------------
+# Prisma
+# ---------------------------------------------------------------
+prisma/generated/
+# bancos locais (se migrar de Postgres para SQLite)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# ---------------------------------------------------------------
+# Variáveis de ambiente — NUNCA commitar credenciais
+# ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------
+# Docker (volumes locais / overrides de máquina)
+# ---------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# ---------------------------------------------------------------
+# Logs
+# ---------------------------------------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------------------------------------------------------------
+# Cache de ferramentas
+# ---------------------------------------------------------------
+.eslintcache
+.cache/
+.turbo/
+.swc/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------
+# Certificados e segredos
+# ---------------------------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ---------------------------------------------------------------
+# Vercel
+# ---------------------------------------------------------------
+.vercel
+
+# ---------------------------------------------------------------
+# IDEs e editores
+# ---------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------
+# Ferramentas de IA (cabeamento de agente — NÃO versionar)
+# São artefatos gerados pelo OpenSpec, um por ferramenta, e regeneráveis:
+#   npx @fission-ai/openspec@latest update
+# A fonte de verdade é openspec/ (config.yaml, specs/, changes/), versionada.
+# As pastas continuam no disco; apenas saem do controle de versão.
+# ---------------------------------------------------------------
+/.agents/
+/.claude/
+/.cursor/
+/.dsh/
+/.kiro/
+/.opencode/
+
+# ---------------------------------------------------------------
+# Sistema operacional
+# ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
