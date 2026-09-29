@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { BadgeStatus } from "@/components/ordens/badge-status";
+import { BotaoExcluirVeiculo } from "@/components/clientes/botao-excluir-veiculo";
 import {
   ChevronLeft,
   Plus,
@@ -160,11 +161,28 @@ export default async function ClienteDetailPage({ params }: Props) {
                           </p>
                         </div>
                       </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/ordens/nova?veiculoId=${veiculo.id}&clienteId=${cliente.id}`}>
-                          Nova OS
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/ordens/nova?veiculoId=${veiculo.id}&clienteId=${cliente.id}`}>
+                            Nova OS
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          aria-label={`Editar veículo ${veiculo.placa}`}
+                        >
+                          <Link href={`/clientes/${cliente.id}/veiculos/${veiculo.id}/editar`}>
+                            <Edit className="h-4 w-4" aria-hidden="true" />
+                          </Link>
+                        </Button>
+                        <BotaoExcluirVeiculo
+                          veiculoId={veiculo.id}
+                          clienteId={cliente.id}
+                          placa={veiculo.placa}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

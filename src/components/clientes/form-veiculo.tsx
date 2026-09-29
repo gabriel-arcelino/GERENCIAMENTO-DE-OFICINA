@@ -7,21 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { criarVeiculoAction } from "@/actions/clientes";
+import { criarVeiculoAction, atualizarVeiculoAction } from "@/actions/clientes";
+
+interface VeiculoExistente {
+  id: string;
+  placa: string;
+  marca: string;
+  modelo: string;
+  ano: number;
+  cor: string | null;
+}
 
 interface FormVeiculoProps {
   clienteId: string;
+  /** Quando presente, o formulário entra em modo de edição. */
+  veiculo?: VeiculoExistente;
 }
 
-export function FormVeiculo({ clienteId }: FormVeiculoProps) {
+export function FormVeiculo({ clienteId, veiculo }: FormVeiculoProps) {
   const router = useRouter();
   const currentYear = new Date().getFullYear();
+  const editando = Boolean(veiculo);
 
-  const [placa, setPlaca] = useState("");
-  const [marca, setMarca] = useState("");
-  const [modelo, setModelo] = useState("");
-  const [ano, setAno] = useState(currentYear.toString());
-  const [cor, setCor] = useState("");
+  const [placa, setPlaca] = useState(veiculo?.placa ?? "");
+  const [marca, setMarca] = useState(veiculo?.marca ?? "");
+  const [modelo, setModelo] = useState(veiculo?.modelo ?? "");
+  const [ano, setAno] = useState((veiculo?.ano ?? currentYear).toString());
+  const [cor, setCor] = useState(veiculo?.cor ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,15 +42,19 @@ export function FormVeiculo({ clienteId }: FormVeiculoProps) {
     setErro(null);
     setLoading(true);
 
+    // `cor || undefined` faz a cor vazia virar null no service, em vez de "".
+    const dados = {
+      placa,
+      marca,
+      modelo,
+      ano: parseInt(ano),
+      cor: cor || undefined,
+    };
+
     try {
-      const result = await criarVeiculoAction({
-        placa,
-        marca,
-        modelo,
-        ano: parseInt(ano),
-        cor,
-        clienteId,
-      });
+      const result = veiculo
+        ? await atualizarVeiculoAction(veiculo.id, clienteId, dados)
+        : await criarVeiculoAction({ ...dados, clienteId });
 
       if (result.success) {
         router.push(`/clientes/${clienteId}`);
@@ -137,7 +153,7 @@ export function FormVeiculo({ clienteId }: FormVeiculoProps) {
       <div className="flex gap-3 pt-2">
         <Button type="submit" disabled={loading} className="flex-1">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-          Cadastrar Veículo
+          {editando ? "Salvar Alterações" : "Cadastrar Veículo"}
         </Button>
         <Button
           type="button"

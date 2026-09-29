@@ -198,7 +198,7 @@ export default async function HomePage() {
               {metricas.pecasEmAlerta > 0 ? (
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3 text-yellow-700">
-                    <AlertTriangle className="h-8 w-8" />
+                    <TriangleAlert className="h-8 w-8" />
                     <div>
                       <p className="font-bold">{metricas.pecasEmAlerta} Peças em Alerta</p>
                       <p className="text-sm">No mínimo ou abaixo do nível recomendado</p>

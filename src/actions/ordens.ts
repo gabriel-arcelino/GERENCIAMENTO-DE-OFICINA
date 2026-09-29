@@ -12,7 +12,7 @@ import {
   AbrirOSInput,
   ItemOSInput,
 } from "@/services/ordemServico";
-import { baixarEstoque, estornarEstoque } from "@/services/estoque";
+import { baixarEstoque, estornarEstoque, toNumber } from "@/services/estoque";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -59,18 +59,34 @@ export async function aprovarOrcamentoAction(osId: string): Promise<ActionResult
   }
 }
 
-export async function adicionarItemOSAction(
-  data: ItemOSInput
-): Promise<ActionResult> {
+export async function adicionarItemOSAction(data: ItemOSInput): Promise<
+  ActionResult<{ alertaEstoqueInsuficiente: boolean; saldoAtual?: number }>
+> {
   try {
-    // Se for peça, baixa o estoque automaticamente
+    // Se for peça, baixa o estoque automaticamente.
+    // O retorno de baixarEstoque precisa ser capturado: descartá-lo fazia o
+    // alerta de saldo insuficiente ser calculado e jogado fora, de modo que o
+    // usuário nunca era avisado (ver docs/pendencias.md).
+    let alertaEstoqueInsuficiente = false;
+    let saldoAtual: number | undefined;
+
     if (data.tipo === "PECA" && data.pecaId) {
-      await baixarEstoque(data.pecaId, data.quantidade, data.osId);
+      const baixa = await baixarEstoque(data.pecaId, data.quantidade, data.osId);
+      alertaEstoqueInsuficiente = baixa.alertaEstoqueInsuficiente;
+      // quantidadeEstoque já reflete a baixa recém-aplicada
+      saldoAtual = toNumber(baixa.peca.quantidadeEstoque);
     }
+
     await adicionarItemOS(data);
     revalidatePath(`/ordens/${data.osId}`);
     revalidatePath("/estoque");
-    return { success: true };
+    return {
+      success: true,
+      data: {
+        alertaEstoqueInsuficiente,
+        saldoAtual: alertaEstoqueInsuficiente ? saldoAtual : undefined,
+      },
+    };
   } catch (e: unknown) {
     return { success: false, error: (e as Error).message };
   }

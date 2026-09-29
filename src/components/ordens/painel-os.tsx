@@ -144,6 +144,7 @@ export function PainelOS({ os, pecasDisponiveis }: PainelOSProps) {
   const [quantidadeItem, setQuantidadeItem] = useState("1");
   const [valorItem, setValorItem] = useState("");
   const [pecaIdItem, setPecaIdItem] = useState("");
+  const [alertaEstoque, setAlertaEstoque] = useState<string | null>(null);
 
   // Dialog: pagamento
   const [dialogPagAberto, setDialogPagAberto] = useState(false);
@@ -190,6 +191,7 @@ export function PainelOS({ os, pecasDisponiveis }: PainelOSProps) {
   async function handleAdicionarItem(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
+    setAlertaEstoque(null);
     setLoading("item");
     try {
       const result = await adicionarItemOSAction({
@@ -203,6 +205,12 @@ export function PainelOS({ os, pecasDisponiveis }: PainelOSProps) {
       if (!result.success) {
         setErro(result.error);
       } else {
+        if (result.data?.alertaEstoqueInsuficiente) {
+          setAlertaEstoque(
+            `Estoque insuficiente. Saldo atual: ${result.data.saldoAtual ?? 0}. ` +
+              "A peça foi lançada mesmo assim e o saldo ficou negativo."
+          );
+        }
         setDialogItemAberto(false);
         setDescricaoItem("");
         setQuantidadeItem("1");
@@ -289,6 +297,13 @@ export function PainelOS({ os, pecasDisponiveis }: PainelOSProps) {
         <Alert variant="warning" role="status">
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>{alertaPag}</AlertDescription>
+        </Alert>
+      )}
+
+      {alertaEstoque && (
+        <Alert variant="warning" role="status">
+          <AlertCircle className="h-4 w-4" aria-hidden="true" />
+          <AlertDescription>{alertaEstoque}</AlertDescription>
         </Alert>
       )}
 
