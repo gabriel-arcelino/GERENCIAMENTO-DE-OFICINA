@@ -1,35 +1,48 @@
 # Pendências e Lacunas Conhecidas
 
-Este documento registra divergências entre o que está especificado e o que está de fato
-implementado, além de código morto identificado durante a unificação das especificações
-(migração Kiro → OpenSpec). **Nada aqui está resolvido** — são itens para triagem.
+Divergências entre o que está especificado e o que está implementado, além de código morto
+identificado durante a unificação das especificações (migração Kiro → OpenSpec).
 
 ---
 
-## 1. Alerta de estoque insuficiente nunca é exibido (bug)
+## Resolvidas
 
-**Requisito:** `openspec/specs/estoque-pecas/spec.md` — *"Tolerância a Saldo Negativo com
-Alerta"* exige alertar o usuário quando a quantidade lançada excede o saldo disponível.
+### ✅ Alerta de estoque insuficiente nunca era exibido — corrigido em `74f9c3b`
 
-**Situação:** o alerta é calculado e descartado.
+O alerta era calculado e descartado: `estoque.ts` devolvia `alertaEstoqueInsuficiente`, mas
+`src/actions/ordens.ts` chamava `baixarEstoque` sem capturar o retorno, e o painel da OS não
+exibia nada. O requisito *"Tolerância a Saldo Negativo com Alerta"* não era cumprido.
 
-- `src/services/estoque.ts:134` calcula `const alertaEstoqueInsuficiente = estoqueAtual < quantidade;`
-- `src/services/estoque.ts:150` devolve o valor no retorno de `baixarEstoque`
-- `src/actions/ordens.ts:68` chama `await baixarEstoque(...)` **sem capturar o retorno**
+Corrigido espelhando o padrão que já existia para o alerta de pagamento excedente
+(`registrarPagamentoAction` + `painel-os.tsx`): a action agora propaga
+`{ alertaEstoqueInsuficiente, saldoAtual }` e o painel exibe o aviso.
 
-**Consequência:** o saldo fica negativo (comportamento permitido pela regra), mas o usuário
-nunca é avisado. O requisito está especificado, porém não cumprido.
+### ✅ Build de produção quebrado por ícone não importado — corrigido em `74f9c3b`
 
-**Correção sugerida:** capturar o retorno na action e propagar o aviso até a UI (por exemplo,
-incluir o sinal no `ActionResult` e exibir um alerta).
+`src/app/page.tsx:201` usava `AlertTriangle` sem importar (a linha 11 importa `TriangleAlert`),
+gerando `TS2304`. Como `next.config.mjs` não define `typescript.ignoreBuildErrors`,
+`npm run build` falhava. Trocado para `TriangleAlert`.
+
+### ✅ Edição e exclusão de veículo inacessíveis — corrigido em `74f9c3b`
+
+`atualizarVeiculo` e `deletarVeiculo` existiam em `src/services/veiculos.ts` sem nenhum
+chamador. Foram expostos:
+
+- `atualizarVeiculoAction` + tela `/clientes/[id]/veiculos/[veiculoId]/editar`
+- `deletarVeiculoAction` + `BotaoExcluirVeiculo` na listagem do cliente
+
+`FormVeiculo` passou a operar em modo criar/editar. O bloqueio de exclusão de veículo com
+ordens de serviço vinculadas já existia no service e agora chega à interface.
 
 ---
 
-## 2. Ajuste de saldo ao editar quantidade de peça na OS (código morto)
+## Abertas
+
+### 1. Ajuste de saldo ao editar quantidade de peça na OS (código morto)
 
 `ajustarEstoqueOS(pecaId, osId, quantidadeAnterior, quantidadeNova)` existe em
 `src/services/estoque.ts:191-220` — baixa a diferença se a quantidade aumentar, estorna se
-diminuir. **Porém não é chamada em lugar nenhum** (nem action, nem componente), e não existe
+diminuir. **Continua sem chamadores** (nem action, nem componente), e não existe
 `atualizarItemOS`: `src/services/ordemServico.ts` só define `adicionarItemOS` e `removerItemOS`.
 
 A regra era explícita na especificação legada. Hoje é inalcançável: alterar a quantidade de um
@@ -38,25 +51,10 @@ item já lançado numa OS não ajusta o estoque.
 **Decisão necessária:** expor a edição de item (criando `atualizarItemOS` + action + UI) ou
 remover a função morta.
 
----
+### 2. Cadastro rápido de cliente/veículo no agendamento (não implementado)
 
-## 3. Edição e exclusão de veículo (código morto)
-
-`atualizarVeiculo` (`src/services/veiculos.ts:92`) e `deletarVeiculo` (`:151`) existem mas **não
-têm chamadores**: `src/actions/clientes.ts` expõe apenas `criarVeiculoAction`, e
-`src/app/clientes/[id]/veiculos/` contém somente `novo/page.tsx` — não há rota de edição.
-
-A especificação legada previa *"atendente edita dados de cliente/veículo"*. A edição de cliente
-funciona; a de veículo não está acessível pela interface.
-
-**Decisão necessária:** criar a tela/action de edição ou remover as funções mortas.
-
----
-
-## 4. Cadastro rápido de cliente/veículo no agendamento (não implementado)
-
-A especificação legada previa, como caso extremo, permitir cadastrar cliente e veículo no próprio
-fluxo de agendamento. Não está implementado:
+A especificação legada previa, como caso extremo, permitir cadastrar cliente e veículo no
+próprio fluxo de agendamento. Não está implementado:
 
 - `src/app/agenda/novo/page.tsx` apenas seleciona cliente e veículo já existentes
 - `src/app/api/clientes/route.ts` expõe somente `GET` (sem `POST`)
@@ -64,9 +62,7 @@ fluxo de agendamento. Não está implementado:
 
 **Decisão necessária:** implementar o fluxo ou confirmar que o cadastro prévio é obrigatório.
 
----
-
-## 5. Cenários sem cláusula GIVEN (formato das especificações)
+### 3. Cenários sem cláusula GIVEN (formato das especificações)
 
 Nove cenários pré-existentes usam apenas WHEN/THEN, sem GIVEN:
 
@@ -79,3 +75,19 @@ Nove cenários pré-existentes usam apenas WHEN/THEN, sem GIVEN:
 
 Não foi possível confirmar se isso reprova em `openspec validate --specs`, porque o CLI do
 OpenSpec não está instalado. **Se reprovar, adicionar as cláusulas GIVEN.**
+
+### 4. Cobertura de teste das funções que tocam banco
+
+Os testes unitários do projeto cobrem apenas funções puras (ex.: `validarPlaca`) — nada que
+acesse o Prisma. As funções recém-expostas (`atualizarVeiculo`, `deletarVeiculo`) e o caminho
+do alerta de estoque não têm teste automatizado.
+
+A infraestrutura para testes de integração já existe (`DATABASE_URL_TEST`,
+`src/lib/prisma-test.ts`, `postgres_test` no Docker na porta 5433, script `test:integration`),
+mas não há nenhum arquivo `*.integration.test.ts` no projeto.
+
+### 5. `deletarClienteAction` também está sem interface
+
+O grep por consumidores não encontra nenhum componente que chame `deletarClienteAction`
+(`src/actions/clientes.ts`). A exclusão de cliente existe no service e na action, mas não há
+botão em nenhuma tela. Mesmo padrão do que foi corrigido para veículo.
